@@ -1,0 +1,8 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "snyk_nuget_remediation": "./src/snyk_nuget_agent/graph.py:graph"
+  },
+  "env": ".env"
+}
+

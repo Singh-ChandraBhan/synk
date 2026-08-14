@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "snyk-nuget-agent"
+version = "1.0.0"
+description = "Approval-gated Snyk remediation for NuGet solutions"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = [
+  "langgraph>=0.2",
+  "langchain-openai>=0.2",
+  "python-dotenv>=1.0",
+  "packaging>=24.0",
+  "streamlit>=1.36",
+]
+
+[project.scripts]
+snyk-nuget-agent = "snyk_nuget_agent.cli:main"
+snyk-nuget-dashboard = "snyk_nuget_agent.dashboard_cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/snyk_nuget_agent"]
+

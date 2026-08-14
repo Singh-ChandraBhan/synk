@@ -1,0 +1,39 @@
+name: Snyk NuGet Remediation
+on:
+  workflow_dispatch:
+    inputs:
+      solution:
+        description: Solution path
+        required: true
+      dry_run:
+        description: Plan only
+        type: boolean
+        default: true
+permissions:
+  contents: read
+jobs:
+  scan-plan:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Install tools
+        shell: pwsh
+        run: |
+          npm install --global snyk
+          python -m pip install .
+      - name: Scan and create plan (never applies changes)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk-nuget-agent plan "${{ inputs.solution }}" --dry-run
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snyk-remediation-evidence
+          path: artifacts/
+
