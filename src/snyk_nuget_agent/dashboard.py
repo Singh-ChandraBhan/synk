@@ -1,9 +1,7 @@
 """Streamlit dashboard. Importing this module performs no remediation."""
 from __future__ import annotations
 
-import json
 import os
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -13,219 +11,144 @@ from snyk_nuget_agent.graph import RemediationService
 
 
 def _theme() -> None:
-    st.markdown(
-        """
-        <style>
-        .stApp {
-            background:
-                radial-gradient(circle at 85% 0%, rgba(59,130,246,.12), transparent 28rem),
-                radial-gradient(circle at 5% 35%, rgba(139,92,246,.08), transparent 24rem),
-                #f8fafc;
-        }
-        [data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #0f172a 0%, #172554 58%, #312e81 100%);
-            border-right: 1px solid rgba(255,255,255,.08);
-        }
-        [data-testid="stSidebar"] * { color: #f8fafc; }
-        [data-testid="stSidebar"] input {
-            color: #0f172a !important;
-            background: rgba(255,255,255,.96) !important;
-        }
-        [data-testid="stSidebar"] [data-baseweb="toggle"] div { color: inherit; }
-        .block-container { max-width: 1440px; padding-top: 1.7rem; padding-bottom: 4rem; }
-        .hero {
-            position: relative; overflow: hidden; border-radius: 24px; padding: 30px 34px;
-            margin-bottom: 24px; color: white;
-            background: linear-gradient(120deg, #0f172a 0%, #1e3a8a 58%, #6d28d9 100%);
-            box-shadow: 0 18px 46px rgba(30,58,138,.2);
-        }
-        .hero:after {
-            content: ""; position: absolute; width: 260px; height: 260px; right: -50px; top: -115px;
-            border-radius: 50%; border: 44px solid rgba(255,255,255,.08);
-        }
-        .hero-kicker { font-size: 12px; font-weight: 800; letter-spacing: .16em; color: #93c5fd; }
-        .hero-title { font-size: clamp(27px, 4vw, 42px); line-height: 1.08; font-weight: 800; margin: 8px 0; }
-        .hero-copy { max-width: 760px; color: #dbeafe; font-size: 15px; margin: 0; }
-        .hero-badge {
-            display: inline-flex; align-items: center; gap: 7px; margin-top: 17px; padding: 7px 12px;
-            border-radius: 999px; font-size: 12px; font-weight: 700;
-            background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
-        }
-        .section-label {
-            margin: 28px 0 12px; color: #0f172a; font-size: 18px; font-weight: 800;
-            display: flex; align-items: center; gap: 9px;
-        }
-        .section-label:after { content: ""; height: 1px; flex: 1; background: linear-gradient(90deg,#cbd5e1,transparent); }
-        div.stButton > button, div.stDownloadButton > button, a[data-testid="stLinkButton"] {
-            min-height: 44px; border-radius: 12px !important; font-weight: 750 !important;
-            border: 1px solid #cbd5e1 !important; box-shadow: 0 4px 12px rgba(15,23,42,.06);
-            transition: transform .15s ease, box-shadow .15s ease;
-        }
-        div.stButton > button:hover, div.stDownloadButton > button:hover {
-            transform: translateY(-1px); box-shadow: 0 7px 18px rgba(37,99,235,.15);
-        }
-        [data-testid="stDataFrame"], [data-testid="stJson"] {
-            border-radius: 14px; overflow: hidden; border: 1px solid #e2e8f0;
-            box-shadow: 0 5px 18px rgba(15,23,42,.05);
-        }
-        [data-testid="stMetric"] {
-            background: rgba(255,255,255,.88); border: 1px solid #e2e8f0;
-            border-radius: 15px; padding: 14px 16px; box-shadow: 0 5px 16px rgba(15,23,42,.05);
-        }
-        div[data-testid="stForm"] {
-            background: rgba(255,255,255,.82); border: 1px solid #dbeafe;
-            border-radius: 18px; padding: 18px; box-shadow: 0 6px 20px rgba(37,99,235,.06);
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown("""<style>
+    :root{color-scheme:dark}.stApp{background:#0c1017;color:#f8fafc}.block-container{max-width:1080px;padding:1.5rem 2rem 4rem}
+    [data-testid="stHeader"]{background:transparent}[data-testid="stSidebar"]{background:#252832;border-right:1px solid #303541}
+    [data-testid="stSidebar"] .block-container{padding:2rem 1.2rem}[data-testid="stSidebar"] *{color:#f8fafc}
+    [data-testid="stSidebar"] input,[data-testid="stSidebar"] [data-baseweb="select"]>div{background:#11151d!important}
+    h1,h2,h3{color:#fff!important}p,label,[data-testid="stCaptionContainer"]{color:#aab2c0}.app-title{font-size:30px;font-weight:850;color:#fff}
+    .app-subtitle{color:#8d96a6;font-size:12px;margin:4px 0 15px}.demo-banner{border:1px solid #f5c542;background:#fff1b8;color:#5b4300;border-radius:6px;padding:10px 13px;font-size:12px;margin-bottom:18px}
+    .section-title{color:#fff;font-size:19px;font-weight:800;margin:22px 0 12px}.context-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
+    .context-label{color:#7d8797;font-size:10px;margin-bottom:4px}.context-value{color:#c8ced8;background:#282b35;border-radius:5px;padding:8px 10px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .status-card{border-radius:10px;min-height:96px;padding:14px 15px;color:#111827;border-left:4px solid var(--accent);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+    .status-icon{font-size:19px;margin-bottom:8px}.status-label{font-size:9px;font-weight:800;letter-spacing:.12em;color:#4b5563}.status-value{margin-top:8px;font-size:14px;font-weight:850;color:#111827}
+    .metric-card{background:#111827;border:1px solid #344154;border-radius:8px;padding:12px 14px}.metric-label{color:#a8b2c2;font-size:10px;font-weight:700}.metric-value{color:#fff;font-size:24px;margin-top:6px}
+    [data-testid="stDataFrame"]{border:1px solid #303744;border-radius:8px;overflow:hidden}[data-testid="stDataFrame"] *{font-size:11px}div[data-testid="stForm"]{background:transparent;border:0;padding:0}
+    div.stButton>button,div.stDownloadButton>button,a[data-testid="stLinkButton"]{border:1px solid #596273!important;border-radius:6px!important;background:#10151d!important;color:#f8fafc!important;font-size:11px!important;font-weight:700!important;min-height:37px}
+    div.stButton>button[kind="primary"],div[data-testid="stFormSubmitButton"] button{background:#ff4f5e!important;border-color:#ff4f5e!important;color:white!important}
+    div.stButton>button:hover{border-color:#ff6b77!important;box-shadow:0 0 0 1px #ff6b77}[data-testid="stTextInput"] input,[data-testid="stTextArea"] textarea,[data-testid="stSelectbox"] [data-baseweb="select"]>div{background:#282b35;color:#fff;border-color:#343946}
+    [data-testid="stAlert"]{border-radius:6px;font-size:12px}details{background:#10141c!important;border:1px solid #343b48!important;border-radius:6px!important}.sidebar-title{font-size:14px;font-weight:800;margin-bottom:12px}.sidebar-note{color:#aab2c0;font-size:10px;line-height:1.55;margin-top:20px}
+    </style>""", unsafe_allow_html=True)
 
 
-def _section(icon: str, title: str) -> None:
-    st.markdown(f'<div class="section-label"><span>{icon}</span>{title}</div>', unsafe_allow_html=True)
+def _title(text: str) -> None:
+    st.markdown(f'<div class="section-title">{text}</div>', unsafe_allow_html=True)
 
 
-def _cards(state: dict[str, Any] | None) -> None:
-    if not state:
-        cards = [
-            ("🔍", "Scan", "Ready", "ready"),
-            ("🛠️", "Remediation", "Not started", "idle"),
-            ("👤", "Approval", "Pending", "pending"),
-            ("🔀", "Pull request", "Not created", "idle"),
-        ]
-    else:
-        approval = state.get("approval") or {}
-        approved = bool(approval.get("approved"))
-        rejected = bool(approval) and not approved
-        validation_ok = bool(state.get("validation", {}).get("success"))
-        status = str(state.get("status", "Not started")).replace("_", " ").title()
-        cards = [
-            ("✅", "Scan", "Complete", "success"),
-            ("🛡️", "Remediation", status, "success" if validation_ok else "active"),
-            ("✓" if approved else "✕" if rejected else "👤", "Approval", "Approved" if approved else "Rejected" if rejected else "Pending", "success" if approved else "danger" if rejected else "pending"),
-            ("🔀", "Pull request", "Demo PR ready" if state.get("demo") and validation_ok else "Description ready" if validation_ok else "Not created", "success" if validation_ok else "idle"),
-        ]
+def _status_cards(state: dict[str, Any] | None) -> None:
+    approval = (state or {}).get("approval") or {}
+    validated = bool((state or {}).get("validation", {}).get("success"))
+    scanned = bool(state)
+    cards = [
+        ("&#128269;", "SCAN STATUS", "Completed" if scanned else "Ready", "#d9f8e5", "#10b981"),
+        ("&#128295;", "REMEDIATION STATUS", "Validated" if validated else "Ready" if scanned else "Not started", "#dceaff", "#2563eb"),
+        ("&#9989;", "APPROVAL STATUS", "Approved" if approval.get("approved") else "Rejected" if approval else "Pending", "#fff4c9", "#f59e0b"),
+        ("&#128279;", "PULL REQUEST", "Ready" if validated else "Not created", "#e8edf3", "#64748b"),
+    ]
+    for column, (icon, label, value, background, accent) in zip(st.columns(4), cards):
+        column.markdown(f'<div class="status-card" style="background:{background};--accent:{accent}"><div class="status-icon">{icon}</div><div class="status-label">{label}</div><div class="status-value">{value}</div></div>', unsafe_allow_html=True)
 
-    palette = {
-        "ready": ("#2563eb", "#eff6ff", "#bfdbfe"),
-        "active": ("#7c3aed", "#f5f3ff", "#ddd6fe"),
-        "success": ("#059669", "#ecfdf5", "#a7f3d0"),
-        "pending": ("#d97706", "#fffbeb", "#fde68a"),
-        "danger": ("#dc2626", "#fef2f2", "#fecaca"),
-        "idle": ("#64748b", "#f8fafc", "#e2e8f0"),
-    }
-    columns = st.columns(4, gap="medium")
-    for column, (icon, label, value, tone) in zip(columns, cards):
-        accent, background, border = palette[tone]
-        column.markdown(
-            f"""
-            <div style="background:{background}; border:1px solid {border}; border-radius:16px;
-                        padding:18px; min-height:116px; box-shadow:0 4px 14px rgba(15,23,42,.06);">
-              <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
-                <div style="width:42px; height:42px; border-radius:12px; background:white;
-                            display:flex; align-items:center; justify-content:center; font-size:22px;
-                            box-shadow:0 2px 8px rgba(15,23,42,.08); color:{accent};">{icon}</div>
-                <div style="font-size:13px; font-weight:700; letter-spacing:.04em;
-                            text-transform:uppercase; color:#475569;">{label}</div>
-              </div>
-              <span style="display:inline-block; color:{accent}; background:white; border:1px solid {border};
-                           border-radius:999px; padding:5px 11px; font-size:14px; font-weight:700;">{value}</span>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+
+def _metrics(findings: list[dict[str, Any]]) -> None:
+    values = [("Total Vulnerabilities", len(findings))]
+    values.extend((severity.title(), sum(1 for item in findings if item["severity"] == severity)) for severity in ("critical", "high", "medium", "low"))
+    for column, (label, value) in zip(st.columns(5), values):
+        column.markdown(f'<div class="metric-card"><div class="metric-label">{label}</div><div class="metric-value">{value}</div></div>', unsafe_allow_html=True)
 
 
 def render() -> None:
-    st.set_page_config(page_title="Snyk NuGet Remediation Agent", layout="wide")
+    st.set_page_config(page_title="Snyk NuGet Remediation Agent", page_icon="🛡️", layout="wide")
     _theme()
-    demo = st.sidebar.toggle("Demo mode (synthetic, never modifies files)", value=True)
-    st.sidebar.markdown("### 🛡️ Scan configuration")
-    repository = st.sidebar.text_input("Repository URL", placeholder="https://github.com/org/repo")
+    st.sidebar.markdown('<div class="sidebar-title">Repository Target</div>', unsafe_allow_html=True)
+    demo = st.sidebar.toggle("Demo mode", value=True)
+    repository = st.sidebar.text_input("Repository", value="https://github.com/acme/orders-api")
     branch = st.sidebar.text_input("Branch", value="main")
-    solution = st.sidebar.text_input("Solution path", value="Synthetic.sln" if demo else "")
-    token = st.sidebar.text_input("Optional Snyk token", type="password")
-    st.sidebar.caption("Tokens are held only for this process and are never displayed or written.")
-    st.sidebar.markdown("---")
-    st.sidebar.caption("🔒 Approval-gated · Backup protected · Rollback ready")
-    state = st.session_state.get("agent_state")
-    mode_label = "Synthetic demo mode" if demo else "Live repository mode"
-    st.markdown(
-        f"""
-        <div class="hero">
-          <div class="hero-kicker">SECURE DEPENDENCY AUTOMATION</div>
-          <div class="hero-title">Snyk NuGet Remediation Agent</div>
-          <p class="hero-copy">Discover vulnerable .NET packages, approve safe upgrades, and validate every remediation with a complete build and MSTest run.</p>
-          <div class="hero-badge">● {mode_label}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    _section("⚡", "Workflow status")
-    _cards(state)
+    solution = st.sidebar.text_input("Solution selector", value="src/Orders.Api.sln" if demo else "")
+    token = st.sidebar.text_input("Snyk token (optional)", type="password")
+    st.sidebar.slider("Compatible-version retries", 1, 5, 2)
+    st.sidebar.markdown('<div class="sidebar-note">Real mode scans internally. No report upload or manual path is required.<br><br>Secrets are never displayed or written to evidence.</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="app-title">Snyk NuGet Remediation Agent</div>', unsafe_allow_html=True)
+    st.markdown('<div class="app-subtitle">LangGraph vulnerability discovery, safe upgrades, build validation, retry, and rollback.</div>', unsafe_allow_html=True)
+    with st.expander("What this application does"):
+        st.write("Scans .NET solutions with Snyk, proposes stable NuGet upgrades, enforces human approval, validates the complete solution, and rolls back unsafe changes.")
     if demo:
-        st.warning("Synthetic demo mode is active. No repository or project files will be modified.")
+        st.markdown('<div class="demo-banner"><b>Demo mode:</b> All vulnerabilities and remediation results below are synthetic data. No project files are changed.</div>', unsafe_allow_html=True)
+
+    _title("Repository & Workflow Status")
+    st.markdown(f'<div class="context-grid"><div><div class="context-label">Repository</div><div class="context-value">{repository or "Local repository"}</div></div><div><div class="context-label">Branch</div><div class="context-value">{branch}</div></div><div><div class="context-label">Solution</div><div class="context-value">{solution or "Not selected"}</div></div></div>', unsafe_allow_html=True)
+    state = st.session_state.get("agent_state")
+    _status_cards(state)
     st.write("")
-    if st.button("🔍  Scan project", type="primary", use_container_width=True):
+    if st.button("Scan Project", type="primary", width="stretch"):
         try:
-            if token: os.environ["SNYK_TOKEN"] = token
-            state = RemediationService().start(solution, demo=demo)
-            st.session_state.agent_state = state
-            st.success("Synthetic scan complete" if demo else "Scan complete")
+            if token:
+                os.environ["SNYK_TOKEN"] = token
+            st.session_state.agent_state = RemediationService().start(solution or "Synthetic.sln", demo=demo)
+            st.rerun()
         except Exception as exc:
             st.error(str(exc))
     state = st.session_state.get("agent_state")
     if not state:
-        st.info(f"Repository: {repository or 'local'} · Branch: {branch} · Workflow: ready")
+        st.info("Scan the project to load findings and prepare a remediation plan.")
         return
-    findings = state.get("findings", [])
-    _section("📊", "Security posture")
-    counts = {severity: sum(1 for f in findings if f["severity"] == severity) for severity in ("critical", "high", "medium", "low")}
-    for column, severity in zip(st.columns(4), counts): column.metric(severity.title(), counts[severity])
-    _section("🧬", "Vulnerability inventory")
-    st.dataframe(findings, use_container_width=True)
-    selected = st.selectbox("Detailed finding", range(len(findings)), format_func=lambda i: f"{findings[i]['package']} · {findings[i]['snyk_id']}") if findings else None
-    if findings and selected is not None: st.json(findings[selected])
-    _section("🛠️", "Safe-version recommendations")
-    st.dataframe(state.get("changes", []), use_container_width=True)
+
+    _title("Human Approval Gate")
     if not state.get("approval"):
         with st.form("approval"):
-            approver = st.text_input("Approver name")
-            comment = st.text_area("Decision comment")
-            approve = st.radio("Decision", ["Approve", "Reject"], horizontal=True)
-            if st.form_submit_button("Record decision"):
+            left, right = st.columns([2, 1])
+            approver = left.text_input("Approver", value="Security Reviewer")
+            comment = left.text_area("Decision comment", value="Reviewed Snyk findings and proposed stable NuGet upgrades.")
+            decision = right.radio("Decision", ["Approve", "Reject"])
+            if st.form_submit_button("Approve Remediation" if decision == "Approve" else "Reject Remediation", width="stretch"):
                 try:
-                    state = RemediationService().decide(state, approve == "Approve", approver, comment)
-                    st.session_state.agent_state = state
+                    st.session_state.agent_state = RemediationService().decide(state, decision == "Approve", approver, comment)
                     st.rerun()
-                except ValueError as exc: st.error(str(exc))
-    _section("🚀", "Remediate and validate")
-    col1, col2 = st.columns(2)
-    if col1.button("🛡️  Fix, build and test", disabled=not (state.get("approval") or {}).get("approved"), use_container_width=True):
+                except ValueError as exc:
+                    st.error(str(exc))
+    else:
+        approval = state["approval"]
+        st.success(f"Decision recorded: {'Approved' if approval['approved'] else 'Rejected'} by {approval['approver']} · {approval['timestamp_utc']}")
+
+    findings = state.get("findings", [])
+    _metrics(findings)
+    _title("Vulnerability Inventory")
+    inventory = [{"Package": item["package"], "Current Version": item["installed_version"], "Severity": item["severity"].title(), "CVE": ", ".join(item["cves"]) or "Not supplied", "Vulnerability ID": item["snyk_id"], "Fixed Version": ", ".join(item["fixed_versions"]), "Dependency": "Transitive" if item["transitive"] else "Direct/unknown"} for item in findings]
+    st.dataframe(inventory, width="stretch", hide_index=True, selection_mode="single-row", on_select="rerun")
+    st.caption("Select one row in the inventory, then use the details button below.")
+    action1, action2, action3 = st.columns(3)
+    show_details = action1.button("View Snyk Details & Remediation", width="stretch")
+    run_fix = action2.button("Fix Snyk NuGet Vulnerabilities & Build Project", disabled=not (state.get("approval") or {}).get("approved"), width="stretch")
+    run_tests = action3.button("Build & Run All MSTest Cases", width="stretch")
+    if show_details:
+        with st.expander("Finding details and safe-version recommendations", expanded=True):
+            st.dataframe(state.get("changes", []), width="stretch", hide_index=True)
+            st.json(findings)
+    if run_fix:
         try:
             st.session_state.agent_state = RemediationService().apply(state)
             st.rerun()
-        except Exception as exc: st.error(str(exc))
-    if col2.button("🧪  Build and test independently", use_container_width=True):
+        except Exception as exc:
+            st.error(str(exc))
+    if run_tests:
         try:
             st.session_state.agent_state = RemediationService().build_test(state)
             st.rerun()
-        except Exception as exc: st.error(str(exc))
+        except Exception as exc:
+            st.error(str(exc))
+
+    state = st.session_state.get("agent_state")
     if state.get("validation"):
-        _section("✅", "Validation results")
-        st.json(state["validation"])
-        st.markdown("#### Test project results")
-        st.dataframe(state["validation"].get("tests", []), use_container_width=True)
-    output = Path(state["output_dir"])
-    result = output / "result.json"
-    if result.exists(): st.download_button("Download JSON evidence", result.read_bytes(), "result.json", "application/json")
-    for title, name in (("Executive Markdown report", "remediation-report.md"), ("Pull-request description", "pull-request.md")):
-        file = output / name
-        if file.exists():
-            st.subheader(title); st.markdown(file.read_text(encoding="utf-8"))
-    if demo and state.get("validation", {}).get("success"):
-        st.link_button("Open synthetic pull request", "https://example.invalid/pull/42")
+        _title("Build & MSTest Results")
+        validation = state["validation"]
+        columns = st.columns(4)
+        columns[0].metric("Build", "Passed" if validation.get("build") else "Failed")
+        totals = validation.get("totals", {})
+        columns[1].metric("Total tests", totals.get("total", 0)); columns[2].metric("Passed", totals.get("passed", 0)); columns[3].metric("Failed", totals.get("failed", 0))
+        st.dataframe(validation.get("tests", []), width="stretch", hide_index=True)
+    result = Path(state["output_dir"]) / "result.json"
+    if result.exists():
+        st.download_button("Download JSON Evidence", result.read_bytes(), "result.json", "application/json")
 
 
 if __name__ == "__main__":
